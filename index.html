@@ -3,67 +3,64 @@
 <head>
 <meta charset="UTF-8">
 <title>Juhayna</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="indexx.css">
-  <link rel="stylesheet" href="library/bootstrap.min.css">
-  <link id="bootstrap-css" rel="stylesheet" href="library/bootstrap.rtl.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="indexx.css">
+<link rel="stylesheet" href="library/bootstrap.min.css">
+<link id="bootstrap-css" rel="stylesheet" href="library/bootstrap.rtl.css">
 </head>
 <body>
- 
+
 <div class="container-right">
   <div class="form-header">
     <img src="NewLogo2 (1).png" width="140px" height="auto" alt="Juhayna Logo" class="logo">
     <h1>تسجيل دخول و خروج السيارات</h1>
   </div>
- 
+
   <p>التاريخ :</p>
   <div id="date"></div>
- 
   <hr>
- 
+
   <p>رقم السياره:</p>
   <div class="dropdown">
-    <button onclick="toggleDropdown(this)" class="dropbtn" type="button" id="car" name="car">اختر رقم السياره</button>
+    <button onclick="toggleDropdown(this)" class="dropbtn" id="car">اختر رقم السياره</button>
     <div class="dropdown-content">
       <input type="text" placeholder="ابحث.." onkeyup="filterList(this)">
       <ul id="car-list"></ul>
     </div>
   </div>
- 
+
   <p>اختر الفرع:</p>
   <div class="dropdown">
-    <button onclick="toggleDropdown(this)" class="dropbtn" type="button" id="branch" name="branch">اختر الفرع</button>
+    <button onclick="toggleDropdown(this)" class="dropbtn" id="branch">اختر الفرع</button>
     <div class="dropdown-content">
       <input type="text" placeholder="ابحث.." onkeyup="filterList(this)">
       <ul id="branch-list"></ul>
     </div>
   </div>
- 
- 
- 
+
   <p>رقم المسار:</p>
   <div class="dropdown">
-    <button onclick="toggleDropdown(this)" class="dropbtn" type="button" id="route" name="route">اختر رقم المسار</button>
+    <button onclick="toggleDropdown(this)" class="dropbtn" id="route">اختر رقم المسار</button>
     <div class="dropdown-content">
       <input type="text" placeholder="ابحث.." onkeyup="filterList(this)">
       <ul id="route-list"></ul>
     </div>
   </div>
- 
-  <button id="add-route-btn" class="btn btn-primary" style="display: none; margin-bottom: 20px;" onclick="showAdditionalRoute()">إضافة مسار</button>
- 
-  <div class="dropdown" id="additional-route-dropdown" style="display: none;">
+
+  <button id="add-route-btn" class="btn btn-primary" style="display:none; margin-bottom:20px;" onclick="showAdditionalRoute()">إضافة مسار</button>
+
+  <div class="dropdown" id="additional-route-dropdown" style="display:none;">
     <p>إضافة مسار (إختياري):</p>
-    <button onclick="toggleDropdown(this)" class="dropbtn" type="button" id="additional-route" name="additional-route">اختر رقم المسار</button>
+    <button onclick="toggleDropdown(this)" class="dropbtn" id="additional-route">اختر رقم المسار</button>
     <div class="dropdown-content">
       <input type="text" placeholder="ابحث.." onkeyup="filterList(this)">
       <ul id="additional-route-list"></ul>
     </div>
   </div>
- 
+
   <p>القطاع:</p>
   <div class="dropdown">
-    <button onclick="toggleDropdown(this)" class="dropbtn" type="button" id="sector" name="sector">اختر القطاع</button>
+    <button onclick="toggleDropdown(this)" class="dropbtn" id="sector">اختر القطاع</button>
     <div class="dropdown-content">
       <input type="text" placeholder="ابحث.." onkeyup="filterList(this)">
       <ul id="sector-list">
@@ -73,62 +70,53 @@
       </ul>
     </div>
   </div>
- 
-    <p>ادخل عداد السيارة</p>
-    <input type="text"  class="form-control mb-2" rows="3" id="odometer" name="odometer">
- 
+
+  <p>ادخل عداد السيارة</p>
+  <input type="text" class="form-control mb-2" id="odometer">
+
   <p>ملاحظات:</p>
-  <textarea class="form-control mb-2" rows="3" placeholder="ملاحظات" id="note" name="note"></textarea>
- 
+  <textarea class="form-control mb-2" rows="3" placeholder="ملاحظات" id="note"></textarea>
+
+  <!-- Hidden fields for QR/autofill mapping -->
+  <input type="hidden" id="vanid" name="vanid">
+  <input type="hidden" id="License_Plate" name="License_Plate">
+  <input type="hidden" id="Branch" name="Branch">
+  <input type="hidden" id="Route_Number" name="Route_Number">
+  <input type="hidden" id="Sector" name="Sector">
+
   <div class="d-flex justify-content-around">
-      <div class="row">
-        <button type="button" class="btn btn-success btn-lg" id="entry-btn" onclick="handleSubmit('دخول')">دخول</button>
-      </div>
-      <div class="row">
-        <button type="button" class="btn btn-danger btn-lg" id="exit-btn" onclick="handleSubmit('خروج')">خروج</button>
-      </div>
+    <div class="row">
+      <button type="button" class="btn btn-success btn-lg" onclick="handleSubmit('دخول')">دخول</button>
+    </div>
+    <div class="row">
+      <button type="button" class="btn btn-danger btn-lg" onclick="handleSubmit('خروج')">خروج</button>
+    </div>
   </div>
- 
 </div>
- 
+
 <script>
 function getdata() {
   fetch("./extracted_unique_values.json")
     .then(response => response.json())
     .then(data => {
-      const branchList = document.getElementById('branch-list');
-      branchList.innerHTML = '';
-      data.branch.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item;
-        branchList.appendChild(li);
-      });
-      const carList = document.getElementById('car-list');
-      carList.innerHTML = '';
-      data.carsnum.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item;
-        carList.appendChild(li);
-      });
-      const routeList = document.getElementById('route-list');
-      routeList.innerHTML = '';
-      data.path_num.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item;
-        routeList.appendChild(li);
-      });
-      const additionalRouteList = document.getElementById('additional-route-list');
-      additionalRouteList.innerHTML = '';
-      data.path_num.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item;
-        additionalRouteList.appendChild(li);
-      });
+      fillList('branch-list', data.branch);
+      fillList('car-list', data.carsnum);
+      fillList('route-list', data.path_num);
+      fillList('additional-route-list', data.path_num);
     })
-    .catch(error => console.error('Error fetching data:', error));
+    .catch(err => console.error('Error fetching data:', err));
 }
-getdata();
- 
+
+function fillList(listId, items) {
+  const ul = document.getElementById(listId);
+  ul.innerHTML = '';
+  items.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    ul.appendChild(li);
+  });
+}
+
 function handleSubmit(action) {
   const branch = document.getElementById("branch").textContent;
   const car = document.getElementById("car").textContent;
@@ -137,134 +125,106 @@ function handleSubmit(action) {
   const sector = document.getElementById("sector").textContent;
   const note = document.getElementById("note").value;
   const odometer = document.getElementById("odometer").value;
-  //const date = new Date().toLocaleString();
   const additionalRouteElement = document.getElementById("additional-route-dropdown");
   const now = new Date();
-  // Create separate variables for the date and time
   const date = now.toLocaleDateString('en-US');
   const time = now.toLocaleTimeString('en-US');
- 
- 
-  if (branch === "اختر الفرع" || car === "اختر رقم السياره" || route === "اختر رقم المسار" || sector === "اختر القطاع" || odometer === "") {
+
+  if (branch.includes("اختر") || car.includes("اختر") || route.includes("اختر") || sector.includes("اختر") || !odometer) {
     alert("يرجى ملء جميع الحقول المطلوبة.");
     return;
-   
   }
-  console.log("additionalRouteContent", additionalRoute);
- 
-  if( additionalRouteElement.style.display == "block" && additionalRoute === "اختر رقم المسار") {
+  if (additionalRouteElement.style.display === "block" && additionalRoute.includes("اختر")) {
     alert("يرجى اختيار مسار إضافي إذا كنت تريد تسجيل .");
     return;
-  }
-  else if (additionalRouteElement.style.display === "block" && additionalRoute != "اختر رقم المسار" && note === "") {
+  } else if (additionalRouteElement.style.display === "block" && !additionalRoute.includes("اختر") && !note) {
     alert("يرجى كتابة سبب اضافة مسار اخر");
     return;
   }
- 
- 
-  const formData = {
-    branch,
-    car,
-    route,
-    additionalRoute,
-    sector,
-    note,
-    action,
-    date,
-    time,
-    odometer
-  };
- 
-  console.log("Submitting form data:", formData);
- 
+
+  const formData = { branch, car, route, additionalRoute, sector, note, action, date, time, odometer };
   fetch("https://script.google.com/macros/s/AKfycbwsmO2f_GfVwgZRUwjJJ7JPeXLRbiCZHxwypf0I_l_cFcwhi68LxW5WJ-9vqPeEZWhfuA/exec", {
     method: "POST",
     redirect: "follow",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(formData),
   })
-    .then(function (response) {
-      if (response.ok) {
-        return response.json();
-      } else {
-        throw new Error("Failed to submit the form.");
-      }
-    })
-    .then(function (data) {
-      console.log("Success:", data);
-      alert("تم إرسال البيانات بنجاح!");
-      redirectToIndex();
-    })
-    .catch(function (error) {
-      console.error("Error:", error);
-      alert("حدث خطأ أثناء إرسال البيانات.");
-    });
+  .then(r => r.ok ? r.json() : Promise.reject("Failed to submit"))
+  .then(() => {
+    alert("تم إرسال البيانات بنجاح!");
+    redirectToIndex();
+  })
+  .catch(err => {
+    console.error("Error:", err);
+    alert("حدث خطأ أثناء إرسال البيانات.");
+  });
 }
- 
-function redirectToIndex() {
-  window.location.href = "index.html";
-}
- 
+
+function redirectToIndex() { window.location.href = "index.html"; }
 function showAdditionalRoute() {
-  const dropdown = document.getElementById("additional-route-dropdown");
-  dropdown.style.display = "block";
+  document.getElementById("additional-route-dropdown").style.display = "block";
   document.getElementById("add-route-btn").style.display = "none";
 }
- 
 function printCurrentDate() {
   const today = new Date();
-  const formattedDate = today.toLocaleDateString('en-US');
-  document.getElementById("date").textContent = formattedDate;
+  document.getElementById("date").textContent = today.toLocaleDateString('en-US');
 }
- 
-window.onload = printCurrentDate;
- 
 function toggleDropdown(button) {
   closeAllDropdowns();
-  const dropdown = button.nextElementSibling;
-  dropdown.classList.toggle('show');
+  button.nextElementSibling.classList.toggle('show');
 }
- 
 function filterList(input) {
   const filter = input.value.toUpperCase();
-  const ul = input.nextElementSibling;
-  const li = ul.getElementsByTagName("li");
+  const li = input.nextElementSibling.getElementsByTagName("li");
   for (let i = 0; i < li.length; i++) {
     const txtValue = li[i].textContent || li[i].innerText;
     li[i].style.display = txtValue.toUpperCase().includes(filter) ? "" : "none";
   }
 }
- 
 function closeAllDropdowns() {
   const dropdowns = document.getElementsByClassName("dropdown-content");
   for (let i = 0; i < dropdowns.length; i++) {
     dropdowns[i].classList.remove('show');
   }
 }
- 
 window.onclick = function(event) {
   if (!event.target.matches('.dropbtn') && !event.target.matches('input')) {
     closeAllDropdowns();
   }
 };
- 
 document.addEventListener("click", function(e) {
-  if (e.target.tagName === "LI" && e.target.parentElement.tagName === "UL") {
+  if (e.target.tagName === "LI") {
     const dropdown = e.target.closest(".dropdown");
     const button = dropdown.querySelector(".dropbtn");
     button.textContent = e.target.textContent;
     closeAllDropdowns();
-   
     if (button.id === "route") {
       document.getElementById("add-route-btn").style.display = "block";
     }
   }
 });
- 
+
+// ✅ Onload: set date, fetch data, and autofill hidden fields from URL params
+window.onload = function () {
+  printCurrentDate();
+  getdata();
+
+  const params = new URLSearchParams(window.location.search);
+  const mappings = {
+    "van_id": "vanid",
+    "plate": "License_Plate",
+    "branch": "Branch",
+    "route": "Route_Number",
+    "sector": "Sector"
+  };
+  for (const [param, fieldId] of Object.entries(mappings)) {
+    const value = params.get(param);
+    if (value !== null) {
+      const input = document.getElementById(fieldId);
+      if (input) input.value = decodeURIComponent(value);
+    }
+  }
+};
 </script>
 </body>
 </html>
- 
- 
