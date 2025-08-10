@@ -225,6 +225,33 @@ window.onload = function () {
     }
   }
 };
+
+// ✅ Autofill from QR code parameters
+window.addEventListener("load", function () {
+  const params = new URLSearchParams(window.location.search);
+
+  // Fill dropdown buttons (change button text)
+  if (params.get("car")) {
+    document.getElementById("car").textContent = decodeURIComponent(params.get("car"));
+  }
+  if (params.get("branch")) {
+    document.getElementById("branch").textContent = decodeURIComponent(params.get("branch"));
+  }
+  if (params.get("route")) {
+    document.getElementById("route").textContent = decodeURIComponent(params.get("route"));
+  }
+  if (params.get("sector")) {
+    document.getElementById("sector").textContent = decodeURIComponent(params.get("sector"));
+  }
+
+  // Fill text inputs
+  if (params.get("odometer")) {
+    document.getElementById("odometer").value = decodeURIComponent(params.get("odometer"));
+  }
+  if (params.get("note")) {
+    document.getElementById("note").value = decodeURIComponent(params.get("note"));
+  }
+});
 </script>
 </body>
 </html>
