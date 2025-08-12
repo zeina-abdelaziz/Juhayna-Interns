@@ -7,6 +7,24 @@
 <link rel="stylesheet" href="indexx.css">
 <link rel="stylesheet" href="library/bootstrap.min.css">
 <link id="bootstrap-css" rel="stylesheet" href="library/bootstrap.rtl.css">
+<style>
+  .camera-container {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+  }
+  #video {
+    width: 300px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+  }
+  #qrStatus {
+    margin-top: 10px;
+    font-weight: bold;
+    color: #007bff;
+  }
+</style>
 </head>
 <body>
 
@@ -20,9 +38,22 @@
   <div id="date"></div>
   <hr>
 
+  <!-- QR Scan Button -->
+  <button class="btn btn-primary" id="ShowCameraBtn">
+    <img src="QRcodeIcon.png" alt="QR Code Icon"> مسح QR
+  </button>
+
+  <!-- Camera Container -->
+  <div id="cameraContainer" class="camera-container">
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="qrStatus"></div>
+    <button class="btn btn-danger mt-2" id="closeCamBtn">إغلاق الكاميرا</button>
+  </div>
+
   <p>رقم السياره:</p>
   <div class="dropdown">
-    <button onclick="toggleDropdown(this)" class="dropbtn" id="car">اختر رقم السياره</button>
+    <button onclick="toggleDropdown(this)" class="dropbtn" type="button" id="car">اختر رقم السياره</button>
     <div class="dropdown-content">
       <input type="text" placeholder="ابحث.." onkeyup="filterList(this)">
       <ul id="car-list"></ul>
@@ -31,7 +62,7 @@
 
   <p>اختر الفرع:</p>
   <div class="dropdown">
-    <button onclick="toggleDropdown(this)" class="dropbtn" id="branch">اختر الفرع</button>
+    <button onclick="toggleDropdown(this)" class="dropbtn" type="button" id="branch">اختر الفرع</button>
     <div class="dropdown-content">
       <input type="text" placeholder="ابحث.." onkeyup="filterList(this)">
       <ul id="branch-list"></ul>
@@ -40,27 +71,16 @@
 
   <p>رقم المسار:</p>
   <div class="dropdown">
-    <button onclick="toggleDropdown(this)" class="dropbtn" id="route">اختر رقم المسار</button>
+    <button onclick="toggleDropdown(this)" class="dropbtn" type="button" id="route">اختر رقم المسار</button>
     <div class="dropdown-content">
       <input type="text" placeholder="ابحث.." onkeyup="filterList(this)">
       <ul id="route-list"></ul>
     </div>
   </div>
 
-  <button id="add-route-btn" class="btn btn-primary" style="display:none; margin-bottom:20px;" onclick="showAdditionalRoute()">إضافة مسار</button>
-
-  <div class="dropdown" id="additional-route-dropdown" style="display:none;">
-    <p>إضافة مسار (إختياري):</p>
-    <button onclick="toggleDropdown(this)" class="dropbtn" id="additional-route">اختر رقم المسار</button>
-    <div class="dropdown-content">
-      <input type="text" placeholder="ابحث.." onkeyup="filterList(this)">
-      <ul id="additional-route-list"></ul>
-    </div>
-  </div>
-
   <p>القطاع:</p>
   <div class="dropdown">
-    <button onclick="toggleDropdown(this)" class="dropbtn" id="sector">اختر القطاع</button>
+    <button onclick="toggleDropdown(this)" class="dropbtn" type="button" id="sector">اختر القطاع</button>
     <div class="dropdown-content">
       <input type="text" placeholder="ابحث.." onkeyup="filterList(this)">
       <ul id="sector-list">
@@ -77,13 +97,6 @@
   <p>ملاحظات:</p>
   <textarea class="form-control mb-2" rows="3" placeholder="ملاحظات" id="note"></textarea>
 
-  <!-- Hidden fields for QR/autofill mapping -->
-  <input type="hidden" id="vanid" name="vanid">
-  <input type="hidden" id="License_Plate" name="License_Plate">
-  <input type="hidden" id="Branch" name="Branch">
-  <input type="hidden" id="Route_Number" name="Route_Number">
-  <input type="hidden" id="Sector" name="Sector">
-
   <div class="d-flex justify-content-around">
     <div class="row">
       <button type="button" class="btn btn-success btn-lg" onclick="handleSubmit('دخول')">دخول</button>
@@ -94,6 +107,9 @@
   </div>
 </div>
 
+<!-- JSQR library for QR decoding -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
 <script>
 function getdata() {
   fetch("./extracted_unique_values.json")
@@ -102,11 +118,9 @@ function getdata() {
       fillList('branch-list', data.branch);
       fillList('car-list', data.carsnum);
       fillList('route-list', data.path_num);
-      fillList('additional-route-list', data.path_num);
     })
     .catch(err => console.error('Error fetching data:', err));
 }
-
 function fillList(listId, items) {
   const ul = document.getElementById(listId);
   ul.innerHTML = '';
@@ -116,43 +130,34 @@ function fillList(listId, items) {
     ul.appendChild(li);
   });
 }
+getdata();
 
 function handleSubmit(action) {
   const branch = document.getElementById("branch").textContent;
   const car = document.getElementById("car").textContent;
   const route = document.getElementById("route").textContent;
-  const additionalRoute = document.getElementById("additional-route").textContent;
   const sector = document.getElementById("sector").textContent;
   const note = document.getElementById("note").value;
   const odometer = document.getElementById("odometer").value;
-  const additionalRouteElement = document.getElementById("additional-route-dropdown");
-  const now = new Date();
-  const date = now.toLocaleDateString('en-US');
-  const time = now.toLocaleTimeString('en-US');
+  const date = new Date().toLocaleDateString('en-US');
+  const time = new Date().toLocaleTimeString('en-US');
 
   if (branch.includes("اختر") || car.includes("اختر") || route.includes("اختر") || sector.includes("اختر") || !odometer) {
     alert("يرجى ملء جميع الحقول المطلوبة.");
     return;
   }
-  if (additionalRouteElement.style.display === "block" && additionalRoute.includes("اختر")) {
-    alert("يرجى اختيار مسار إضافي إذا كنت تريد تسجيل .");
-    return;
-  } else if (additionalRouteElement.style.display === "block" && !additionalRoute.includes("اختر") && !note) {
-    alert("يرجى كتابة سبب اضافة مسار اخر");
-    return;
-  }
 
-  const formData = { branch, car, route, additionalRoute, sector, note, action, date, time, odometer };
+  const formData = { branch, car, route, sector, note, action, date, time, odometer };
+
   fetch("https://script.google.com/macros/s/AKfycbwsmO2f_GfVwgZRUwjJJ7JPeXLRbiCZHxwypf0I_l_cFcwhi68LxW5WJ-9vqPeEZWhfuA/exec", {
     method: "POST",
-    redirect: "follow",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(formData),
   })
   .then(r => r.ok ? r.json() : Promise.reject("Failed to submit"))
   .then(() => {
     alert("تم إرسال البيانات بنجاح!");
-    redirectToIndex();
+    location.reload();
   })
   .catch(err => {
     console.error("Error:", err);
@@ -160,15 +165,6 @@ function handleSubmit(action) {
   });
 }
 
-function redirectToIndex() { window.location.href = "index.html"; }
-function showAdditionalRoute() {
-  document.getElementById("additional-route-dropdown").style.display = "block";
-  document.getElementById("add-route-btn").style.display = "none";
-}
-function printCurrentDate() {
-  const today = new Date();
-  document.getElementById("date").textContent = today.toLocaleDateString('en-US');
-}
 function toggleDropdown(button) {
   closeAllDropdowns();
   button.nextElementSibling.classList.toggle('show');
@@ -187,70 +183,91 @@ function closeAllDropdowns() {
     dropdowns[i].classList.remove('show');
   }
 }
-window.onclick = function(event) {
-  if (!event.target.matches('.dropbtn') && !event.target.matches('input')) {
-    closeAllDropdowns();
-  }
-};
 document.addEventListener("click", function(e) {
   if (e.target.tagName === "LI") {
     const dropdown = e.target.closest(".dropdown");
     const button = dropdown.querySelector(".dropbtn");
     button.textContent = e.target.textContent;
     closeAllDropdowns();
-    if (button.id === "route") {
-      document.getElementById("add-route-btn").style.display = "block";
-    }
   }
 });
+document.getElementById("date").textContent = new Date().toLocaleDateString('en-US');
 
-// ✅ Onload: set date, fetch data, and autofill hidden fields from URL params
-window.onload = function () {
-  printCurrentDate();
-  getdata();
+// ===== QR SCAN LOGIC =====
+let stream = null;
+let scanTimer = null;
+const video  = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+const statusEl = document.getElementById('qrStatus');
 
-  const params = new URLSearchParams(window.location.search);
-  const mappings = {
-    "van_id": "vanid",
-    "plate": "License_Plate",
-    "branch": "Branch",
-    "route": "Route_Number",
-    "sector": "Sector"
-  };
-  for (const [param, fieldId] of Object.entries(mappings)) {
-    const value = params.get(param);
-    if (value !== null) {
-      const input = document.getElementById(fieldId);
-      if (input) input.value = decodeURIComponent(value);
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false
+    });
+    video.srcObject = stream;
+    statusEl.textContent = 'جاري فتح الكاميرا...';
+    await video.play();
+    startScanLoop();
+  } catch (e) {
+    statusEl.textContent = 'تعذر فتح الكاميرا.';
+  }
+}
+function stopCamera() {
+  if (scanTimer) { cancelAnimationFrame(scanTimer); scanTimer = null; }
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  statusEl.textContent = '';
+}
+function startScanLoop() {
+  const scan = () => {
+    if (!video.videoWidth) {
+      scanTimer = requestAnimationFrame(scan);
+      return;
     }
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imgData.data, imgData.width, imgData.height);
+    if (code && code.data) {
+      try {
+        const payload = JSON.parse(code.data);
+        statusEl.textContent = 'تمت قراءة الرمز ✅';
+        if (payload.carsnum) document.getElementById('car').textContent = payload.carsnum;
+        if (payload.branch)  document.getElementById('branch').textContent = payload.branch;
+        if (payload.path_num) document.getElementById('route').textContent = payload.path_num;
+        if (payload.sector)  document.getElementById('sector').textContent = payload.sector;
+        stopCamera();
+        document.getElementById('cameraContainer').style.display = 'none';
+        return;
+      } catch {
+        statusEl.textContent = 'رمز غير صالح';
+      }
+    } else {
+      statusEl.textContent = 'ابحث عن QR...';
+    }
+    scanTimer = requestAnimationFrame(scan);
+  };
+  scan();
+}
+document.getElementById('ShowCameraBtn').addEventListener('click', () => {
+  const camBox = document.getElementById('cameraContainer');
+  if (camBox.style.display === 'none') {
+    camBox.style.display = 'flex';
+    startCamera();
+  } else {
+    camBox.style.display = 'none';
+    stopCamera();
   }
-};
-
-// ✅ Autofill from QR code parameters
-window.addEventListener("load", function () {
-  const params = new URLSearchParams(window.location.search);
-
-  // Fill dropdown buttons (change button text)
-  if (params.get("car")) {
-    document.getElementById("car").textContent = decodeURIComponent(params.get("car"));
-  }
-  if (params.get("branch")) {
-    document.getElementById("branch").textContent = decodeURIComponent(params.get("branch"));
-  }
-  if (params.get("route")) {
-    document.getElementById("route").textContent = decodeURIComponent(params.get("route"));
-  }
-  if (params.get("sector")) {
-    document.getElementById("sector").textContent = decodeURIComponent(params.get("sector"));
-  }
-
-  // Fill text inputs
-  if (params.get("odometer")) {
-    document.getElementById("odometer").value = decodeURIComponent(params.get("odometer"));
-  }
-  if (params.get("note")) {
-    document.getElementById("note").value = decodeURIComponent(params.get("note"));
-  }
+});
+document.getElementById('closeCamBtn').addEventListener('click', () => {
+  document.getElementById('cameraContainer').style.display = 'none';
+  stopCamera();
 });
 </script>
 </body>
